@@ -19,8 +19,10 @@ First few rows of data and descriptive summary of its variables shown above. The
 ```{r echo=TRUE}
 total_steps_day <- with(data, aggregate(steps ~ date,FUN=sum))
 mean_total_steps <- round(mean(total_steps_day$steps))
+hist(total_steps_day$steps,labels=TRUE,ylim=c(0,30),main="Histogram of total number of daily steps",xlab="Number of steps per day")
+abline(v=mean_total_steps,col='red')
 ```
-On average the total number of daily steps was `r mean_total_steps`.
+On average (red vertical line) the total number of daily steps was `r mean_total_steps`.
 
 ## What is the average daily activity pattern?
 
