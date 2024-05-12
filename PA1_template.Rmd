@@ -7,12 +7,20 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+```{r echo=TRUE}
+data <- read.csv("activity.csv")
+head(data);
+dim <- dim(data)
+summary(data)
+```
+First few rows of data and descriptive summary of its variables shown above. There are `r dim[1]` records in the dataset.
 
 ## What is mean total number of steps taken per day?
-
-
+```{r echo=TRUE}
+total_steps_day <- with(data, aggregate(steps ~ date,FUN=sum))
+mean_total_steps <- round(mean(total_steps_day$steps))
+```
+On average the total number of daily steps was `r mean_total_steps`.
 
 ## What is the average daily activity pattern?
 
