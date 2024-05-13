@@ -21,18 +21,20 @@ total_steps_day <- with(data, aggregate(steps ~ date,FUN=sum))
 mean_total_steps <- round(mean(total_steps_day$steps))
 median_total_steps <- round(median(total_steps_day$steps))
 
-hist(total_steps_day$steps,labels=TRUE,ylim=c(0,30),main="Histogram of total number of daily steps",xlab="Number of steps per day")
+hist(total_steps_day$steps,labels=TRUE,ylim=c(0,30),main="Total number of daily steps",xlab="Number of steps per day")
 abline(v=mean_total_steps,col='red',lty=5,lwd=2)
 abline(v=median_total_steps,col='blue',lty=3,lwd=4)
 ```
-Mean (red dashed line) of the total number of daily steps was `r mean_total_steps`.
-Median (blue dotted line) of the total number of daily steps was `r median_total_steps`.
+
+Mean (red dashed line) of the total number of daily steps was `r format(mean_total_steps,scientific=F)`.
+Median (blue dotted line) of the total number of daily steps was `r format(median_total_steps,scientific=F)`.
 
 ## What is the average daily activity pattern?
 ```{r echo=TRUE}
 steps_per_timepoint <- with(data, aggregate(steps ~ interval,FUN=mean))
 
-plot(x=steps_per_timepoint$interval,y=steps_per_timepoint$steps,type='l',ylab="Mean",main="Average number of steps taken across all days",xlab="Interval")
+plot(x=steps_per_timepoint$interval,y=steps_per_timepoint$steps,type='l',ylab="Mean",
+     main="Average number of steps taken across all days",xlab="Interval")
 
 # Interval with highest average of steps
 max_steps <- max(steps_per_timepoint$steps)
@@ -40,13 +42,42 @@ interval_max <- steps_per_timepoint$interval[which(steps_per_timepoint$steps==ma
 interval_max
 
 axislabel <- paste0("Max at \n",interval_max)
-max_avg_steps <- paste0("Max is ",round(max_steps))
+max_avg_steps <- paste0("Max is ~ ",round(max_steps))
 axis(side=1,at=c(interval_max),labels=axislabel,tick=FALSE)
 text(x=interval_max,y=max_steps,col="purple",labels=max_avg_steps,pos=4)
 ```
 
+The 5-minute interval at `r interval_max` contains the maximum number of `r round(max_steps,2)` steps taken, averaged across all days.
+
 ## Imputing missing values
+```{r echo=TRUE}
+miss_vec <- is.na(data$steps)
+missings <- sum(miss_vec)
+```
+There are in total `r missings` missing records in the dataset.
 
+Strategy to replace NAs: sample randomly from all non-NA 5min-interval averages 
+```{r echo =TRUE}
+library(dplyr)
+set.seed(19)
+samplev <- sample(x=steps_per_timepoint$steps[!is.na(steps_per_timepoint$steps)],size=dim(data)[1],replace=TRUE)
 
+data_sample <- cbind(data,samplev)
+data_imputed <- data_sample %>% mutate(steps = ifelse(is.na(steps),samplev,steps))
+```
+Reproduce the histogram and averages:
+```{r echo=TRUE}
+total_steps_day <- with(data_imputed, aggregate(steps ~ date,FUN=sum))
+mean_total_steps <- round(mean(total_steps_day$steps))
+median_total_steps <- round(median(total_steps_day$steps))
+
+hist(total_steps_day$steps,labels=TRUE,ylim=c(0,40),main="Total number of daily steps (NAs imputed)",
+     xlab="Number of steps per day")
+abline(v=mean_total_steps,col='red',lty=5,lwd=2)
+abline(v=median_total_steps,col='blue',lty=3,lwd=4)
+```
+
+Mean (red dashed line) of the total number of daily steps was `r format(mean_total_steps,scientific=F)`.
+Median (blue dotted line) of the total number of daily steps was `r format(median_total_steps,scientific=F)`.
 
 ## Are there differences in activity patterns between weekdays and weekends?
