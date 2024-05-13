@@ -4,7 +4,10 @@ output:
   html_document:
     keep_md: true
 ---
-
+# Libaries used
+- dplyr
+- patchwork
+- ggplot2
 
 ## Loading and preprocessing the data
 
@@ -68,14 +71,7 @@ plot(x=steps_per_timepoint$interval,y=steps_per_timepoint$steps,type='l',ylab="M
 # Interval with highest average of steps
 max_steps <- max(steps_per_timepoint$steps)
 interval_max <- steps_per_timepoint$interval[which(steps_per_timepoint$steps==max_steps)]
-interval_max
-```
 
-```
-## [1] 835
-```
-
-```r
 axislabel <- paste0("Max at \n",interval_max)
 max_avg_steps <- paste0("Max is ~ ",round(max_steps))
 axis(side=1,at=c(interval_max),labels=axislabel,tick=FALSE)
@@ -119,11 +115,15 @@ library(dplyr)
 
 ```r
 set.seed(19)
+# Generate vector with randomly sampled number of steps averages with same length as raw data has rows
 samplev <- sample(x=steps_per_timepoint$steps[!is.na(steps_per_timepoint$steps)],size=dim(data)[1],replace=TRUE)
 
+# Join sampled averages on data
 data_sample <- cbind(data,samplev)
+# replace each NA with respective random step count
 data_imputed <- data_sample %>% mutate(steps = ifelse(is.na(steps),samplev,steps))
 ```
+
 Reproduce the histogram and averages:
 
 ```r
@@ -142,4 +142,40 @@ abline(v=median_total_steps,col='blue',lty=3,lwd=4)
 Mean (red dashed line) of the total number of daily steps was 10787.
 Median (blue dotted line) of the total number of daily steps was 10645.
 
+The values differ from the non-imputed raw data.
+First of all, mean and median deviate more from each other now than in original data. 
+Secondly, compared to the previous statistics, the mean only slightly increased while the median decreased by ca. 1%.
+This is because the random imputation at intervals with missing step count is using many 0es since they make up more than half of all step counts.
+
 ## Are there differences in activity patterns between weekdays and weekends?
+Wasn't able to set language to English, therefore the R output produced German weekday names.
+So this bit will need to be updated depending on your language setting. 
+Please replace "Samstag","Sonntag" with "Sunday" , "Saturday" below.
+
+```r
+# Create Weekday factor variable 
+data_imputed <- data_imputed %>% mutate(wkd = ifelse(weekdays(as.POSIXct(date)) %in% c("Samstag","Sonntag"),"Weekend","Weekday"))
+data_imputed$wkd <- factor(data_imputed$wkd)
+steps_per_interval <- with(data_imputed, aggregate(steps ~ wkd+interval,FUN=mean))
+data_weekday <- subset(steps_per_interval,wkd=="Weekday")
+data_weekend <- subset(steps_per_interval,wkd=="Weekend")
+```
+
+
+```r
+#install.packages("patchwork")
+library(patchwork)
+library(ggplot2)
+
+g1 <- ggplot(data=data_weekday) + 
+  geom_line(aes(x=interval,y=steps)) +
+  labs(title="Weekdays",y="Number of steps")
+g2 <- ggplot(data=data_weekend) + 
+  geom_line(aes(x=interval,y=steps)) +
+  labs(title="Weekends",y="Number of steps")
+g1 + g2 + plot_layout(ncol = 1)
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
